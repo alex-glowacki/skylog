@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Firmware ────────────────────────────────────────────────────────────────
+  firmware:
+    name: Firmware — PlatformIO build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python (required by PlatformIO)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache PlatformIO packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('firmware/skylog-node/platformio.ini') }}
+          restore-keys: pio-
+
+      - name: Install PlatformIO CLI
+        run: pip install platformio
+
+      - name: Build firmware (dev)
+        working-directory: firmware/skylog-node
+        run: |
+          pio run --environment esp32dev \
+            --build-flag "-DWIFI_SSID='\"ci_ssid\"'" \
+            --build-flag "-DWIFI_PASS='\"ci_pass\"'" \
+            --build-flag "-DMQTT_HOST='\"127.0.0.1\"'"
+
+  # ── Server ──────────────────────────────────────────────────────────────────
+  server:
+    name: Server — lint & test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('server/skylog-server/pyproject.toml') }}
+          restore-keys: pip-
+
+      - name: Install package and dev dependencies
+        working-directory: server/skylog-server
+        run: pip install -e ".[dev]"
+
+      - name: Lint — ruff check
+        working-directory: server/skylog-server
+        run: ruff check src tests
+
+      - name: Lint — ruff format check
+        working-directory: server/skylog-server
+        run: ruff format --check src tests
+
+      - name: Test — pytest
+        working-directory: server/skylog-server
+        run: pytest --cov=src --cov-report=term-missing

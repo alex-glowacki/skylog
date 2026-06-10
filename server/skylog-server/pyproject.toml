@@ -1,0 +1,39 @@
+[build-system]
+requires = [ "hatchling" ]
+build-backend = "hatchling.build"
+
+[project]
+name = "skylog-server"
+version = "0.1.0"
+description = "SkyLog MQTT subscriber, data pipeline, and REST API backend."
+readme = "README.md"
+license = { file = "../../LICENSE" }
+requires-python = ">=3.11"
+dependencies = [
+    "paho-mqtt>=2.0",
+    "influxdb-client>=1.40",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+    "httpx>=0.27",             # async HTTP - NWS API calls
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = [ "pytest>=8.0", "pytest-cov", "pytest-asyncio>=0.23", "ruff" ]
+
+[project.scripts]
+skylog-server = "skylog.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = [ "src/skylog" ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [ "E", "F", "I", "UP" ]
+
+[tool.pytest.ini_options]
+testpaths = [ "tests" ]
+asyncio_mode = "auto"

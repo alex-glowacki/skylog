@@ -1,0 +1,6 @@
+CompileFlags:
+  Compiler: C:\Users\alexg\.platformio\packages\toolchain-xtensa-esp32\bin\xtensa-esp32-elf-g++.exe
+  Remove:
+    - -mlongcalls
+    - -fstrict-volatile-bitfields
+    - -fno-tree-switch-conversion
